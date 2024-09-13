@@ -1,0 +1,79 @@
+# Loading in required libraries
+import pandas as pd
+import seaborn as sns
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Start coding here!
+  dfNobel=pd.read_csv('nobel.csv')
+dfNobel.head()
+dfNobel.describe()
+dfNobel.info()
+# find duplicate rows
+duplicates = dfNobel.duplicated()
+duplicate_rows = dfNobel[dfNobel.duplicated()]
+
+#Top_gender, count id group by gender
+top_gender=dfNobel.groupby('sex').size().sort_values(ascending=False).index[0]
+print(top_gender)
+
+#Top country, group by birth_country
+top_country=dfNobel.groupby('birth_country').size().sort_values(ascending=False).index[0]
+print(top_country)
+
+sns.countplot(data=dfNobel, x='sex')
+plt.show()
+
+# top 5 country
+top5=dfNobel.groupby('birth_country').size().sort_values(ascending=False).reset_index(name='count').head(5)
+sns.barplot(data=top5, x='birth_country',y='count')
+plt.show()
+
+  # create decade column, this column has value of year with last digit is 0
+dfNobel['decade']=dfNobel['year'].apply(lambda x: int(np.floor(x/10)*10))
+
+# How US is named in the collumn?
+filtered_cells = dfNobel[dfNobel['birth_country'].str.contains('America', na=False)]
+print(filtered_cells['birth_country'])
+
+# filter to born in USa
+dfNobel['USA?']=dfNobel['birth_country']=='United States of America'
+
+# Group by decade, agg= mean of US born
+max_decade_usa=dfNobel.groupby('decade')['USA?'].mean().idxmax()
+# idxmax = sort_values(ascending=False).reset_index().head(1)['decade']
+
+dfNobelUSA=dfNobel[dfNobel['USA?']]
+sns.countplot(data=dfNobelUSA, x='decade')
+# Filtering for female winners
+dfNobel['female']=dfNobel['sex']=='Female'
+        
+#group by two column
+# calculate the  proportion
+#return the highest proportion 
+max_female_tuple=dfNobel.groupby(['decade','category'])['female'].mean().idxmax()
+# save  as dictionary
+max_female_dict={max_female_tuple[0]:max_female_tuple[1]}
+print(max_female_dict)
+
+# create lineplot with x is year and hue by category
+dfNobel['femalePct']=dfNobel.groupby('decade')['female'].mean()
+sns.relplot(kind='line',data=dfNobel,x='decade',y='female', hue='category', ci=None)
+
+  #w2: access atributes through index of the min value
+
+# Filer man
+# row that has min on a column
+# Get the index a
+woman_index= dfNobel[dfNobel['female']==True]['year'].idxmin()
+# Now lets access thoru index
+first_woman_name=dfNobel.loc[woman_index,'full_name']
+first_woman_category=dfNobel.loc[woman_index,'category']
+# For individual
+# Group by fullname, count_values
+name_counts = dfNobel['full_name'].value_counts()
+# filter to count_value>1
+duplicate_names = name_counts[name_counts > 1].index
+# get the name, turn to list
+repeat_list=duplicate_names.tolist()
+
